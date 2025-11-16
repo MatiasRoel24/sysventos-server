@@ -6,23 +6,21 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { EventInventory } from '../../inventories/entities/event-inventory.entity';
 import { ProductSupply } from '../../product-supplies/entities/product-supply.entity';
-import { OrderItem } from '../../orders/entities/order-item.entity';
+import { EventSupplyInventory } from '../../inventories/entities/event-supply-inventory.entity';
 
-@Entity({ name: 'products' })
-export class Product {
+@Entity({ name: 'supplies' })
+export class Supply {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 100 })
   name: string;
 
-  @Column({
-    type: 'numeric',
-    precision: 10,
-    scale: 2,
-  })
+  @Column({ type: 'varchar', length: 20 })
+  unit: string;
+
+  @Column({ type: 'numeric', precision: 10, scale: 2 })
   cost: number;
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
@@ -42,12 +40,12 @@ export class Product {
   })
   updatedAt: Date;
 
-  @OneToMany(() => EventInventory, (eventInventory) => eventInventory.product)
-  eventInventories: EventInventory[];
-
-  @OneToMany(() => ProductSupply, (productSupply) => productSupply.product)
+  @OneToMany(() => ProductSupply, (productSupply) => productSupply.supply)
   productSupplies: ProductSupply[];
 
-  @OneToMany(() => OrderItem, (orderItem) => orderItem.product)
-  orderItems: OrderItem[];
+  @OneToMany(
+    () => EventSupplyInventory,
+    (eventSupply) => eventSupply.supply,
+  )
+  eventSupplyInventories: EventSupplyInventory[];
 }
