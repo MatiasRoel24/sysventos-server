@@ -10,6 +10,8 @@ import { PaymentsModule } from './payments/payments.module';
 import { RolesModule } from './roles/roles.module';
 import { InventoriesModule } from './inventories/inventories.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -38,8 +40,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     PaymentsModule,
     RolesModule,
     InventoriesModule,
+    AuthModule,
+    SeedModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

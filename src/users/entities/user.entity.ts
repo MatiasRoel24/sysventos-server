@@ -1,4 +1,6 @@
 import {
+  BeforeInsert,
+  BeforeUpdate,
   Column,
   CreateDateColumn,
   Entity,
@@ -14,11 +16,11 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'user_name', type: 'varchar', length: 50 })
+  @Column({ name: 'user_name', type: 'varchar', unique: true , length: 50 })
   userName: string;
 
-  @Column({ name: 'password_hash', type: 'varchar', length: 255 })
-  passwordHash: string;
+  @Column({ name: 'password_hash', type: 'varchar', length: 255, select: false })
+  password: string;
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
@@ -37,9 +39,20 @@ export class User {
   })
   updatedAt: Date;
 
+  /* TODO: Verificar si tengo que modificar algo mas */
   @OneToMany(() => UserRole, (userRole) => userRole.user)
   userRoles: UserRole[];
 
   @OneToMany(() => Order, (order) => order.createdBy)
   orders: Order[];
+
+  @BeforeInsert()
+  checkFieldsBeforeInsert(){
+    this.userName = this.userName.toLowerCase().trim();
+  }
+
+  @BeforeUpdate()
+  checkFieldsBeforeUpdate(){
+    this.checkFieldsBeforeInsert();
+  }
 }

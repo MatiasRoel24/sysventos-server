@@ -2,7 +2,10 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { RawService } from './raw.service';
 import { CreateRawDto } from './dto/create-raw.dto';
 import { UpdateRawDto } from './dto/update-raw.dto';
+import { Auth } from '../auth/decorators';
+import { ValidRoles } from '../auth/interfaces';
 
+@Auth(ValidRoles.admin)
 @Controller('raw')
 export class RawController {
   constructor(private readonly rawService: RawService) {}
