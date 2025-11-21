@@ -6,7 +6,7 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 import { Product } from '../../products/entities/product.entity';
-import { Supply } from '../../raw/entities/supply.entity';
+import { Supply } from '../../supplies/entities/supply.entity';
 
 @Entity({ name: 'product_supplies' })
 export class ProductSupply {

@@ -8,7 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Event } from '../../events/entities/event.entity';
-import { Supply } from '../../raw/entities/supply.entity';
+import { Supply } from '../../supplies/entities/supply.entity';
 
 @Entity({ name: 'event_supply_inventories' })
 export class EventSupplyInventory {

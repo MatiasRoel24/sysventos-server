@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventsModule } from './events/events.module';
 import { OrdersModule } from './orders/orders.module';
 import { ProductsModule } from './products/products.module';
-import { RawModule } from './raw/raw.module';
+import { SuppliesModule } from './supplies/supplies.module';
 import { UsersModule } from './users/users.module';
 import { SalesModule } from './sales/sales.module';
 import { PaymentsModule } from './payments/payments.module';
@@ -34,7 +34,7 @@ import { SeedModule } from './seed/seed.module';
     EventsModule,
     ProductsModule,
     OrdersModule,
-    RawModule,
+    SuppliesModule,
     UsersModule,
     SalesModule,
     PaymentsModule,
