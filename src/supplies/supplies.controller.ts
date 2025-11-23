@@ -79,16 +79,11 @@ export class SuppliesController {
     /**
      * Obtener productos que usan este insumo
      * @param id - UUID del insumo
-     * @returns Product[] - Productos (pendiente)
+     * @returns ProductSupply[] - Productos que usan el insumo
      */
     @Get(':id/products')
     findProducts(@Param('id', ParseUUIDPipe) id: string) {
-        // TODO: Implementar cuando el módulo Products esté disponible
-        return {
-            message: 'Endpoint en desarrollo - Módulo Products pendiente',
-            supplyId: id,
-            products: [],
-        };
+        return this.suppliesService.getProducts(id);
     }
 
     /**

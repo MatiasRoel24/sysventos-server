@@ -32,6 +32,9 @@ export class Event {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
+  @Column({ name: 'is_closed', type: 'boolean', default: false })
+  isClosed: boolean;
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp without time zone',

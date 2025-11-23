@@ -9,6 +9,7 @@ import { CreateSupplyDto } from './dto/create-supply.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
 import { Supply } from './entities/supply.entity';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { ProductSupply } from '../product-supplies/entities/product-supply.entity';
 
 /**
  * Servicio para gestionar insumos (Supplies)
@@ -18,6 +19,8 @@ export class SuppliesService {
     constructor(
         @InjectRepository(Supply)
         private readonly supplyRepository: Repository<Supply>,
+        @InjectRepository(ProductSupply)
+        private readonly productSupplyRepository: Repository<ProductSupply>,
     ) { }
 
     /**
@@ -128,7 +131,7 @@ export class SuppliesService {
                 where: { name: normalizedName },
             });
 
-            if (existingSupply && existingSupply.id !== id && existingSupply.isActive) 
+            if (existingSupply && existingSupply.id !== id && existingSupply.isActive)
                 throw new BadRequestException(`Ya existe un insumo activo con el nombre "${updateSupplyDto.name}"`);
             updateSupplyDto.name = normalizedName;
         }
@@ -185,5 +188,20 @@ export class SuppliesService {
         supply.isActive = true;
 
         return this.supplyRepository.save(supply);
+    }
+
+    /**
+     * Obtener productos que usan este insumo
+     * @param supplyId - UUID del insumo
+     * @returns ProductSupply[] - Productos con cantidades
+     */
+    async getProducts(supplyId: string): Promise<ProductSupply[]> {
+        await this.findOne(supplyId); // Validar que el insumo exista
+
+        return this.productSupplyRepository.find({
+            where: { supplyId },
+            relations: ['product'],
+            order: { product: { name: 'ASC' } },
+        });
     }
 }
