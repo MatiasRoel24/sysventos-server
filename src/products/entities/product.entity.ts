@@ -18,13 +18,6 @@ export class Product {
   @Column({ type: 'varchar', length: 50 })
   name: string;
 
-  @Column({
-    type: 'numeric',
-    precision: 10,
-    scale: 2,
-  })
-  cost: number;
-
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 

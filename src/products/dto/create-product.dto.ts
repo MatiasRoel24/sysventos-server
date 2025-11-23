@@ -1,6 +1,7 @@
 import {
     IsNotEmpty,
     IsNumber,
+    IsOptional,
     IsPositive,
     IsString,
     MinLength,
@@ -21,11 +22,13 @@ export class CreateProductDto {
     name: string;
 
     /**
-     * Costo base del producto
+     * Costo del producto
      * @type number
-     * Debe ser mayor a 0
+     * Opcional: se calcula automáticamente si tiene receta
+     * Requerido: solo para productos sin receta (ej: gaseosas)
      */
+    @IsOptional()
     @IsNumber()
     @IsPositive()
-    cost: number;
+    cost?: number;
 }

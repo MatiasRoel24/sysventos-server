@@ -281,7 +281,6 @@ export class ProductsService {
     if (!product) throw new NotFoundException(`Producto con ID "${id}" no encontrado`);
 
     product.name = createProductDto.name.toLowerCase().trim();
-    product.cost = createProductDto.cost;
     product.isActive = true;
 
     return this.productRepository.save(product);

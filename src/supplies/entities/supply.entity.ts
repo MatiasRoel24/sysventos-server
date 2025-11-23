@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { ProductSupply } from '../../product-supplies/entities/product-supply.entity';
 import { EventSupplyInventory } from '../../inventories/entities/event-supply-inventory.entity';
+import { SupplyUnit } from '../enums/supply-unit.enum';
 
 @Entity({ name: 'supplies' })
 export class Supply {
@@ -17,8 +18,12 @@ export class Supply {
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
-  @Column({ type: 'varchar', length: 20 })
-  unit: string;
+  @Column({
+    type: 'enum',
+    enum: SupplyUnit,
+    default: SupplyUnit.UNIDAD,
+  })
+  unit: SupplyUnit;
 
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   cost: number;

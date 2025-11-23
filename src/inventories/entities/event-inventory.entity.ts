@@ -33,11 +33,23 @@ export class EventInventory {
   @Column({ name: 'initial_qty', type: 'numeric', precision: 10, scale: 2 })
   initialQty: number;
 
+  @Column({ name: 'current_qty', type: 'numeric', precision: 10, scale: 2 })
+  currentQty: number;
+
   @Column({ name: 'min_qty', type: 'numeric', precision: 10, scale: 2 })
   minQty: number;
 
   @Column({ type: 'numeric', precision: 10, scale: 2 })
-  price: number;
+  cost: number;
+
+  @Column({ name: 'sale_price', type: 'numeric', precision: 10, scale: 2 })
+  salePrice: number;
+
+  @Column({ name: 'profit_margin', type: 'numeric', precision: 10, scale: 2 })
+  profitMargin: number;
+
+  @Column({ name: 'has_recipe', type: 'boolean', default: false })
+  hasRecipe: boolean;
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;

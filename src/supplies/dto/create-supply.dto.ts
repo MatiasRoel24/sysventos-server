@@ -1,10 +1,12 @@
 import {
+    IsEnum,
     IsNotEmpty,
     IsNumber,
     IsPositive,
     IsString,
     MinLength,
 } from 'class-validator';
+import { SupplyUnit } from '../enums/supply-unit.enum';
 
 /**
  * DTO para crear un nuevo insumo (Supply)
@@ -22,12 +24,12 @@ export class CreateSupplyDto {
 
     /**
      * Unidad de medida del insumo
-     * @type string
-     * Ejemplos: kg, litros, unidades
+     * @type SupplyUnit
+     * Valores permitidos: kg, g, lt, ml, unidad, paquete
      */
-    @IsString()
+    @IsEnum(SupplyUnit)
     @IsNotEmpty()
-    unit: string;
+    unit: SupplyUnit;
 
     /**
      * Costo del insumo

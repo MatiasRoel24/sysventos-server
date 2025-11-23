@@ -33,6 +33,9 @@ export class EventSupplyInventory {
   @Column({ name: 'initial_qty', type: 'numeric', precision: 10, scale: 2 })
   initialQty: number;
 
+  @Column({ name: 'current_qty', type: 'numeric', precision: 10, scale: 2 })
+  currentQty: number;
+
   @Column({ name: 'min_qty', type: 'numeric', precision: 10, scale: 2 })
   minQty: number;
 
