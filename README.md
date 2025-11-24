@@ -84,10 +84,10 @@ SysVentos es una API REST desarrollada con **NestJS** y **TypeScript** que permi
 - [🍔 Products (Productos)](./docs/Analisis%20-%20Products.md)
 - [🎪 Events (Eventos)](./docs/Analisis%20-%20Events.md)
 - [📊 Inventario de Productos](./docs/inventario/Inventario-Productos.md)
+- [📦 Inventario de Insumos](./docs/inventario/Inventario-Insumos.md)
 
 ### Próximamente
 
-- 📦 Inventario de Insumos
 - 🧾 Orders (Órdenes)
 - 💰 Sales (Ventas)
 

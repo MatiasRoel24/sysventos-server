@@ -7,6 +7,11 @@ export class UpdateSupplyInventoryDto {
     @IsOptional()
     @IsNumber()
     @Min(0)
+    initialQty?: number;
+
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
     currentQty?: number;
 
     @IsOptional()

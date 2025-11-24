@@ -140,9 +140,20 @@ export class EventSupplyInventoryService {
         // No permitir modificar eventos cerrados
         if (inventory.event.isClosed) throw new BadRequestException('No se puede modificar inventario de evento cerrado');
 
-        // Validar minQty <= initialQty si se actualiza
-        if (updateDto.minQty !== undefined && updateDto.minQty > inventory.initialQty) 
-            throw new BadRequestException('minQty no puede ser mayor que initialQty');
+        // Validar minQty <= initialQty si se actualiza alguno
+        const newInitialQty = updateDto.initialQty !== undefined
+            ? updateDto.initialQty
+            : inventory.initialQty;
+        const newMinQty = updateDto.minQty !== undefined
+            ? updateDto.minQty
+            : inventory.minQty;
+
+        // Convertir a Number para evitar comparación de strings (desde BD PostgreSQL NUMERIC)
+        if (Number(newMinQty) > Number(newInitialQty)) {
+            throw new BadRequestException(
+                'minQty no puede ser mayor que initialQty',
+            );
+        }
 
         Object.assign(inventory, updateDto);
         return this.eventSupplyInventoryRepository.save(inventory);
