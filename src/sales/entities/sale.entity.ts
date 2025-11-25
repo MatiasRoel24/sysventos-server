@@ -26,6 +26,9 @@ export class Sale {
   @Column({ type: 'numeric', precision: 10, scale: 2 })
   amount: number;
 
+  @Column({ type: 'varchar', length: 50, default: 'COMPLETED' })
+  status: string;
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp without time zone',

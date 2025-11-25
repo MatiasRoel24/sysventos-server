@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, ValidateNested, ArrayMinSize } from 'class-validator';
+import { IsArray, ValidateNested, ArrayMinSize, IsString, IsIn } from 'class-validator';
 import { CreateOrderItemDto } from './create-order-item.dto';
 
 /**
@@ -11,4 +11,10 @@ export class CreateOrderDto {
     @ValidateNested({ each: true })
     @Type(() => CreateOrderItemDto)
     items: CreateOrderItemDto[];
+
+    @IsString()
+    @IsIn(['EFECTIVO', 'TRANSFERENCIA'], {
+        message: 'El método de pago debe ser EFECTIVO o TRANSFERENCIA'
+    })
+    paymentMethod: string;
 }

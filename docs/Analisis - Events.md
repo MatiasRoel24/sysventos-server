@@ -252,7 +252,7 @@
 
 ---
 
-### 10. Obtener Estadísticas
+### 10. Obtener Estadísticas Completas del Evento
 
 **Endpoint:** `GET /events/:id/stats`  
 **Autenticación:** Solo ADMIN
@@ -264,17 +264,139 @@
   "event": {
     "id": "uuid",
     "name": "kermese 2025",
-    ...
+    "startDate": "2025-12-01T10:00:00.000Z",
+    "endDate": "2025-12-01T22:00:00.000Z",
+    "isClosed": false
   },
-  "stats": {
-    "totalOrders": 0,
-    "totalSales": 0,
-    "totalRevenue": 0
+  "summary": {
+    "totalOrders": 25,
+    "completedOrders": 23,
+    "cancelledOrders": 2,
+    "totalRevenue": 210000,
+    "totalRefunds": 21000,
+    "netRevenue": 189000,
+    "salesByMethod": {
+      "EFECTIVO": {
+        "completed": { "count": 15, "amount": 150000 },
+        "cancelled": { "count": 1, "amount": 10000 },
+        "net": 140000
+      },
+      "TRANSFERENCIA": {
+        "completed": { "count": 8, "amount": 60000 },
+        "cancelled": { "count": 1, "amount": 11000 },
+        "net": 49000
+      }
+    }
+  },
+  "products": {
+    "topSelling": [
+      {
+        "product": "Hamburguesa Completa",
+        "qtySold": 45,
+        "revenue": 157500
+      },
+      {
+        "product": "Papas Fritas",
+        "qtySold": 30,
+        "revenue": 45000
+      }
+    ],
+    "leastSelling": [
+      {
+        "product": "Ensalada",
+        "qtySold": 3,
+        "revenue": 4500
+      }
+    ],
+    "topProfitable": [
+      {
+        "product": "Hamburguesa Completa",
+        "revenue": 157500,
+        "cost": 67500,
+        "profit": 90000,
+        "profitMargin": 57.14
+      },
+      {
+        "product": "Papas Fritas",
+        "revenue": 45000,
+        "cost": 15000,
+        "profit": 30000,
+        "profitMargin": 66.67
+      }
+    ],
+    "leastProfitable": [
+      {
+        "product": "Ensalada",
+        "revenue": 4500,
+        "cost": 3500,
+        "profit": 1000,
+        "profitMargin": 22.22
+      }
+    ],
+    "topRemaining": [
+      {
+        "product": "Milanesa Napolitana",
+        "initialQty": 50,
+        "currentQty": 35,
+        "sold": 15,
+        "remaining": 35,
+        "wastedPercentage": 70.0
+      }
+    ],
+    "leastRemaining": [
+      {
+        "product": "Hamburguesa Completa",
+        "initialQty": 50,
+        "currentQty": 5,
+        "sold": 45,
+        "remaining": 5,
+        "wastedPercentage": 10.0
+      }
+    ],
+    "mostWasted": [
+      {
+        "product": "Milanesa Napolitana",
+        "initialQty": 50,
+        "currentQty": 35,
+        "sold": 15,
+        "remaining": 35,
+        "wastedPercentage": 70.0
+      }
+    ]
   }
 }
 ```
 
-**Nota:** Placeholder, se completará con módulos Orders y Sales.
+**Métricas Calculadas:**
+
+1. **Resumen de Ventas:**
+   - Total de órdenes (completadas + canceladas)
+   - Revenue total (ventas completadas)
+   - Refunds (ventas canceladas/reembolsos)
+   - Revenue neto (revenue - refunds)
+   - Desglose por método de pago
+
+2. **Productos Más/Menos Vendidos:**
+   - Top 5 productos por cantidad vendida
+   - Bottom 5 productos por cantidad vendida
+   - Incluye revenue generado
+
+3. **Productos con Mayor/Menor Ganancia:**
+   - Top 5 productos por profit (revenue - cost)
+   - Bottom 5 productos por profit
+   - Margen de ganancia porcentual
+
+4. **Sobrantes de Inventario:**
+   - Top 5 productos con más stock restante
+   - Bottom 5 productos con menos stock restante
+   - Top 5 productos con mayor % de desperdicio
+
+**Casos de Uso:**
+
+- Análisis post-evento para proyecciones
+- Identificar productos más rentables
+- Detectar productos con bajo movimiento
+- Optimizar compras futuras basado en sobrantes
 
 ---
 

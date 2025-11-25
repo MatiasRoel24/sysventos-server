@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EventInventory } from './entities/event-inventory.entity';
 import { EventSupplyInventory } from './entities/event-supply-inventory.entity';
@@ -18,7 +18,7 @@ import { SuppliesModule } from '../supplies/supplies.module';
   imports: [
     TypeOrmModule.forFeature([EventInventory, EventSupplyInventory]),
     AuthModule,
-    EventsModule,
+    forwardRef(() => EventsModule),
     ProductsModule,
     SuppliesModule,
   ],

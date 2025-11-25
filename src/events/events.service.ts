@@ -2,6 +2,8 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,6 +11,9 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { Event } from './entities/event.entity';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { OrdersService } from '../orders/services/orders.service';
+import { SalesService } from '../sales/sales.service';
+import { EventProductInventoryService } from '../inventories/services/event-product-inventory.service';
 
 /**
  * Servicio para gestionar eventos
@@ -18,6 +23,12 @@ export class EventsService {
   constructor(
     @InjectRepository(Event)
     private readonly eventRepository: Repository<Event>,
+    @Inject(forwardRef(() => OrdersService))
+    private readonly ordersService: OrdersService,
+    @Inject(forwardRef(() => SalesService))
+    private readonly salesService: SalesService,
+    @Inject(forwardRef(() => EventProductInventoryService))
+    private readonly productInventoryService: EventProductInventoryService,
   ) { }
 
   /**
@@ -128,9 +139,9 @@ export class EventsService {
         where: { name: normalizedName },
       });
 
-      if (existingEvent && existingEvent.id !== id && existingEvent.isActive) 
+      if (existingEvent && existingEvent.id !== id && existingEvent.isActive)
         throw new BadRequestException(`Ya existe un evento activo con el nombre "${updateEventDto.name}"`);
-      
+
       updateEventDto.name = normalizedName;
     }
 
@@ -212,22 +223,117 @@ export class EventsService {
   async getStats(id: string): Promise<any> {
     const event = await this.findOne(id);
 
-    // TODO: Implementar cuando existan los módulos Orders y Sales
-    // Por ahora retorna estructura básica
+    // Obtener todas las órdenes del evento
+    const orders = await this.ordersService.findByEvent(id);
+
+    // Obtener totales de ventas
+    const salesTotals = await this.salesService.getTotals(id);
+
+    // Obtener inventario de productos del evento
+    const productInventories = await this.productInventoryService.findAll(id);
+
+    // Calcular productos más y menos vendidos
+    const productSales = new Map<string, { product: any; qty: number; revenue: number; cost: number }>();
+
+    for (const order of orders) {
+      if (order.status.name === 'CANCELLED') continue; // No contar canceladas
+
+      for (const item of order.items) {
+        const key = item.product.id;
+        const existing = productSales.get(key) || { product: item.product, qty: 0, revenue: 0, cost: 0 };
+
+        existing.qty += Number(item.qty);
+        existing.revenue += Number(item.qty) * Number(item.unitPrice);
+
+        // Buscar costo del producto en inventario
+        const inventory = productInventories.find(inv => inv.product.id === item.product.id);
+        if (inventory) {
+          existing.cost += Number(item.qty) * Number(inventory.cost);
+        }
+
+        productSales.set(key, existing);
+      }
+    }
+
+    // Convertir a array y ordenar
+    const productSalesArray = Array.from(productSales.values());
+
+    // Productos más y menos vendidos
+    const sortedByQty = [...productSalesArray].sort((a, b) => b.qty - a.qty);
+    const topSelling = sortedByQty.slice(0, 5).map(p => ({
+      product: p.product.name,
+      qtySold: p.qty,
+      revenue: p.revenue,
+    }));
+    const leastSelling = sortedByQty.slice(-5).reverse().map(p => ({
+      product: p.product.name,
+      qtySold: p.qty,
+      revenue: p.revenue,
+    }));
+
+    // Productos con mayor y menor ganancia
+    const productsWithProfit = productSalesArray.map(p => ({
+      product: p.product.name,
+      revenue: p.revenue,
+      cost: p.cost,
+      profit: p.revenue - p.cost,
+      profitMargin: p.revenue > 0 ? ((p.revenue - p.cost) / p.revenue) * 100 : 0,
+    }));
+
+    const sortedByProfit = [...productsWithProfit].sort((a, b) => b.profit - a.profit);
+    const topProfitable = sortedByProfit.slice(0, 5);
+    const leastProfitable = sortedByProfit.slice(-5).reverse();
+
+    // Productos con mayor y menor sobrante
+    const productsWithStock = productInventories
+      .filter(inv => inv.isActive)
+      .map(inv => {
+        const sold = productSales.get(inv.product.id)?.qty || 0;
+        return {
+          product: inv.product.name,
+          initialQty: Number(inv.initialQty),
+          currentQty: Number(inv.currentQty),
+          sold,
+          remaining: Number(inv.currentQty),
+          wastedPercentage: Number(inv.initialQty) > 0
+            ? (Number(inv.currentQty) / Number(inv.initialQty)) * 100
+            : 0,
+        };
+      });
+
+    const sortedByRemaining = [...productsWithStock].sort((a, b) => b.remaining - a.remaining);
+    const topRemaining = sortedByRemaining.slice(0, 5);
+    const leastRemaining = sortedByRemaining.slice(-5).reverse();
+
+    // Productos con mayor desperdicio (sobrante alto)
+    const sortedByWaste = [...productsWithStock].sort((a, b) => b.wastedPercentage - a.wastedPercentage);
+    const mostWasted = sortedByWaste.slice(0, 5);
+
     return {
       event: {
         id: event.id,
         name: event.name,
         startDate: event.startDate,
         endDate: event.endDate,
-        isActive: event.isActive,
         isClosed: event.isClosed,
       },
-      stats: {
-        totalOrders: 0,
-        totalSales: 0,
-        totalRevenue: 0,
-        // Se completará cuando existan Orders y Sales
+      summary: {
+        totalOrders: orders.length,
+        completedOrders: orders.filter(o => o.status.name === 'COMPLETED').length,
+        cancelledOrders: orders.filter(o => o.status.name === 'CANCELLED').length,
+        totalRevenue: salesTotals.totalRevenue,
+        totalRefunds: salesTotals.totalRefunds,
+        netRevenue: salesTotals.netRevenue,
+        salesByMethod: salesTotals.byMethod,
+      },
+      products: {
+        topSelling,
+        leastSelling,
+        topProfitable,
+        leastProfitable,
+        topRemaining,
+        leastRemaining,
+        mostWasted,
       },
     };
   }

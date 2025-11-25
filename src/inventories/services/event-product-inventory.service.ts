@@ -2,6 +2,8 @@ import {
     BadRequestException,
     Injectable,
     NotFoundException,
+    Inject,
+    forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -19,6 +21,7 @@ export class EventProductInventoryService {
     constructor(
         @InjectRepository(EventInventory)
         private readonly eventInventoryRepository: Repository<EventInventory>,
+        @Inject(forwardRef(() => EventsService))
         private readonly eventsService: EventsService,
         private readonly productsService: ProductsService,
     ) { }

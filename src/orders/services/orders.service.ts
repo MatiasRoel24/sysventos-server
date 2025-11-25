@@ -2,6 +2,8 @@ import {
     BadRequestException,
     Injectable,
     NotFoundException,
+    Inject,
+    forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,6 +13,7 @@ import { CreateOrderDto } from '../dto/create-order.dto';
 import { OrderStatusService } from './order-status.service';
 import { EventsService } from '../../events/events.service';
 import { EventProductInventoryService } from '../../inventories/services/event-product-inventory.service';
+import { SalesService } from '../../sales/sales.service';
 
 /**
  * Servicio para gestionar órdenes
@@ -23,8 +26,11 @@ export class OrdersService {
         @InjectRepository(OrderItem)
         private readonly orderItemRepository: Repository<OrderItem>,
         private readonly orderStatusService: OrderStatusService,
+        @Inject(forwardRef(() => EventsService))
         private readonly eventsService: EventsService,
+        @Inject(forwardRef(() => EventProductInventoryService))
         private readonly productInventoryService: EventProductInventoryService,
+        private readonly salesService: SalesService,
     ) { }
 
     /**
@@ -87,7 +93,16 @@ export class OrdersService {
             items: orderItems,
         });
 
-        return this.orderRepository.save(order);
+        const savedOrder = await this.orderRepository.save(order);
+
+        // Crear venta automáticamente
+        await this.salesService.create({
+            orderId: savedOrder.id,
+            method: createDto.paymentMethod,
+            amount: totalAmount,
+        });
+
+        return savedOrder;
     }
 
     /**
@@ -183,6 +198,11 @@ export class OrdersService {
             await this.orderItemRepository.save(item);
         }
 
-        return this.orderRepository.save(order);
+        const cancelledOrder = await this.orderRepository.save(order);
+
+        // Cancelar venta asociada (reembolso)
+        await this.salesService.cancelByOrder(orderId);
+
+        return cancelledOrder;
     }
 }
