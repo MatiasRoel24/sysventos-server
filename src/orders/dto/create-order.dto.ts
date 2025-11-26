@@ -17,4 +17,7 @@ export class CreateOrderDto {
         message: 'El método de pago debe ser EFECTIVO o TRANSFERENCIA'
     })
     paymentMethod: string;
+
+    @IsString()
+    observations?: string;
 }

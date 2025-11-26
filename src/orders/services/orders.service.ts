@@ -90,6 +90,7 @@ export class OrdersService {
             orderNumber,
             status: pendingStatus,
             totalAmount,
+            observations: createDto.observations,
             items: orderItems,
         });
 
