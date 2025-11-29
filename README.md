@@ -66,7 +66,7 @@ SysVentos es una API REST desarrollada con **NestJS** y **TypeScript** que permi
 ### Módulos Implementados
 
 - ✅ **Auth** - Autenticación y autorización
-- ✅ **Users** - Gestión de usuarios
+- ✅ **Users** - Gestión de usuarios y roles
 - ✅ **Supplies** - Insumos/ingredientes
 - ✅ **Products** - Productos vendibles y recetas
 - ✅ **Events** - Gestión de eventos
@@ -80,6 +80,7 @@ SysVentos es una API REST desarrollada con **NestJS** y **TypeScript** que permi
 
 ### Módulos Completados
 
+- [👥 Users (Usuarios)](./docs/Analisis%20-%20Users.md)
 - [📦 Supplies (Insumos)](./docs/Analisis%20-%20Supplies.md)
 - [🍔 Products (Productos)](./docs/Analisis%20-%20Products.md)
 - [🎪 Events (Eventos)](./docs/Analisis%20-%20Events.md)
