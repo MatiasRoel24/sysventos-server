@@ -10,21 +10,20 @@ export class RolesService {
         private readonly roleRepository: Repository<Role>,
     ) { }
 
-    async findAll(): Promise<Role[]> {
-        return await this.roleRepository.find({
-            order: { createdAt: 'DESC' },
-        });
+    /**
+     * Listar roles disponibles para asignar (sin admin)
+     */
+    async findAvailable(): Promise<Role[]> {
+        return await this.roleRepository
+            .createQueryBuilder('role')
+            .where('LOWER(role.name) != :adminRole', { adminRole: 'admin' })
+            .orderBy('role.name', 'ASC')
+            .getMany();
     }
 
     async findOne(id: string): Promise<Role> {
         const role = await this.roleRepository.findOne({ where: { id } });
-        if (!role) {
-            throw new NotFoundException(`Role with ID "${id}" not found`);
-        }
+        if (!role) throw new NotFoundException(`Role with ID "${id}" not found`);
         return role;
-    }
-
-    async findByName(name: string): Promise<Role | null> {
-        return await this.roleRepository.findOne({ where: { name } });
     }
 }

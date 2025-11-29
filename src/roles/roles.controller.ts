@@ -8,9 +8,12 @@ import { ValidRoles } from '../auth/interfaces';
 export class RolesController {
     constructor(private readonly rolesService: RolesService) { }
 
-    @Get()
-    findAll() {
-        return this.rolesService.findAll();
+    /**
+     * Listar roles disponibles para asignar
+     */
+    @Get('available')
+    findAvailable() {
+        return this.rolesService.findAvailable();
     }
 
     @Get(':id')

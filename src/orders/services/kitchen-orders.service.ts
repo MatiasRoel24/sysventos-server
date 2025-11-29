@@ -97,9 +97,7 @@ export class KitchenOrdersService {
 
         // Descontar stock de insumos por cada producto con receta
         for (const item of order.items) {
-            const recipe = await this.productsService.getSupplies(
-                item.product.id,
-            );
+            const recipe = await this.productsService.getSupplies(item.product.id);
 
             // Si el producto tiene receta, descontar insumos
             if (recipe && recipe.length > 0) {
