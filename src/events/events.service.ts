@@ -14,6 +14,7 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { OrdersService } from '../orders/services/orders.service';
 import { SalesService } from '../sales/sales.service';
 import { EventProductInventoryService } from '../inventories/services/event-product-inventory.service';
+import { EventSupplyInventoryService } from '../inventories/services/event-supply-inventory.service';
 
 /**
  * Servicio para gestionar eventos
@@ -29,6 +30,8 @@ export class EventsService {
     private readonly salesService: SalesService,
     @Inject(forwardRef(() => EventProductInventoryService))
     private readonly productInventoryService: EventProductInventoryService,
+    @Inject(forwardRef(() => EventSupplyInventoryService))
+    private readonly supplyInventoryService: EventSupplyInventoryService,
   ) { }
 
   /**
@@ -232,6 +235,9 @@ export class EventsService {
     // Obtener inventario de productos del evento
     const productInventories = await this.productInventoryService.findAll(id);
 
+    // Obtener inventario de insumos del evento
+    const supplyInventories = await this.supplyInventoryService.findAll(id);
+
     // Calcular productos más y menos vendidos
     const productSales = new Map<string, { product: any; qty: number; revenue: number; cost: number }>();
 
@@ -309,6 +315,17 @@ export class EventsService {
     const sortedByWaste = [...productsWithStock].sort((a, b) => b.wastedPercentage - a.wastedPercentage);
     const mostWasted = sortedByWaste.slice(0, 5);
 
+    // Calcular Inversión Total
+    const productInvestment = productInventories.reduce((sum, item) => {
+      return sum + (Number(item.initialQty) * Number(item.cost));
+    }, 0);
+
+    const supplyInvestment = supplyInventories.reduce((sum, item) => {
+      return sum + (Number(item.initialQty) * Number(item.cost));
+    }, 0);
+
+    const totalInvestment = productInvestment + supplyInvestment;
+
     return {
       event: {
         id: event.id,
@@ -325,6 +342,9 @@ export class EventsService {
         totalRefunds: salesTotals.totalRefunds,
         netRevenue: salesTotals.netRevenue,
         salesByMethod: salesTotals.byMethod,
+        totalInvestment: totalInvestment,
+        totalSupplies: supplyInventories.length,
+        totalProducts: productInventories.length,
       },
       products: {
         topSelling,
