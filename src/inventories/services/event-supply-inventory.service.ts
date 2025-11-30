@@ -60,6 +60,7 @@ export class EventSupplyInventoryService {
                 initialQty: item.initialQty,
                 currentQty: item.initialQty,
                 minQty: item.minQty,
+                cost: item.cost,
             });
 
             inventories.push(inventory);

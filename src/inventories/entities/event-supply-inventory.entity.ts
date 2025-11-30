@@ -39,6 +39,9 @@ export class EventSupplyInventory {
   @Column({ name: 'min_qty', type: 'numeric', precision: 10, scale: 2 })
   minQty: number;
 
+  @Column({ name: 'cost', type: 'numeric', precision: 10, scale: 2, default: 0 })
+  cost: number;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 

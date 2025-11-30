@@ -350,11 +350,11 @@ export class EventsService {
   }
 
   /**
-   * Validar que startDate sea anterior a endDate
+   * Validar que startDate sea anterior o igual a endDate
    * @param startDate - Fecha de inicio
    * @param endDate - Fecha de fin
    */
   private validateEventDates(startDate: Date, endDate: Date): void {
-    if (startDate >= endDate) throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
+    if (startDate > endDate) throw new BadRequestException('La fecha de inicio debe ser anterior o igual a la fecha de fin');
   }
 }

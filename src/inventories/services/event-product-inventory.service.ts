@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventInventory } from '../entities/event-inventory.entity';
+import { EventSupplyInventory } from '../entities/event-supply-inventory.entity';
 import { LoadProductInventoryDto } from '../dto/load-product-inventory.dto';
 import { UpdateProductInventoryDto } from '../dto/update-product-inventory.dto';
 import { EventsService } from '../../events/events.service';
@@ -21,6 +22,8 @@ export class EventProductInventoryService {
     constructor(
         @InjectRepository(EventInventory)
         private readonly eventInventoryRepository: Repository<EventInventory>,
+        @InjectRepository(EventSupplyInventory)
+        private readonly eventSupplyInventoryRepository: Repository<EventSupplyInventory>,
         @Inject(forwardRef(() => EventsService))
         private readonly eventsService: EventsService,
         private readonly productsService: ProductsService,
@@ -44,9 +47,7 @@ export class EventProductInventoryService {
 
         for (const item of loadDto.products) {
             // Validar producto
-            const product = await this.productsService
-
-                .findOne(item.productId);
+            const product = await this.productsService.findOne(item.productId);
             if (!product.isActive)
                 throw new BadRequestException(
                     `El producto "${product.name}" no está activo`,
@@ -77,10 +78,19 @@ export class EventProductInventoryService {
             if (recipe && recipe.length > 0) {
                 hasRecipe = true;
 
-                // Calcular costo sumando (supply.cost × qtyPerUnit)
-                for (const ps of recipe) {
-                    if (ps.supply && ps.supply.cost) {
-                        calculatedCost += ps.supply.cost * ps.qtyPerUnit;
+                // Si viene el costo desde el frontend, lo usamos (prioridad al usuario/frontend)
+                if (item.cost !== undefined && item.cost !== null && item.cost > 0) {
+                    calculatedCost = item.cost;
+                } else {
+                    // Calcular costo sumando (supply.cost × qtyPerUnit) usando costos del evento si existen
+                    for (const ps of recipe) {
+                        // Buscar si el insumo está en el inventario del evento para usar su costo específico
+                        const eventSupply = await this.eventSupplyInventoryRepository.findOne({
+                            where: { eventId, supplyId: ps.supplyId }
+                        });
+                        const supplyCost = eventSupply ? Number(eventSupply.cost) : (ps.supply ? Number(ps.supply.cost) : 0);
+
+                        if (supplyCost > 0) calculatedCost += supplyCost * ps.qtyPerUnit;
                     }
                 }
             } else {
@@ -94,8 +104,12 @@ export class EventProductInventoryService {
             }
 
             // Calcular margen de ganancia
-            const profitMargin =
-                ((item.salePrice - calculatedCost) / calculatedCost) * 100;
+            let profitMargin = 0;
+            if (calculatedCost > 0) {
+                profitMargin = ((item.salePrice - calculatedCost) / calculatedCost) * 100;
+            } else if (item.salePrice > 0) {
+                profitMargin = 100; // Costo 0 y precio > 0 implica 100% (o infinito) de ganancia
+            }
 
             // Crear inventario
             const inventory = this.eventInventoryRepository.create({

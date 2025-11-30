@@ -21,6 +21,9 @@ export class Product {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
+  @Column({ name: 'has_recipe', type: 'boolean', default: false })
+  hasRecipe: boolean;
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'timestamp without time zone',

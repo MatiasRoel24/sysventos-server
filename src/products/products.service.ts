@@ -196,6 +196,10 @@ export class ProductsService {
       productSupplies.push(saved);
     }
 
+    // Actualizar hasRecipe a true
+    product.hasRecipe = true;
+    await this.productRepository.save(product);
+
     return productSupplies;
   }
 
@@ -254,6 +258,17 @@ export class ProductsService {
     if (!productSupply) throw new NotFoundException(`El insumo no está asignado a este producto`);
 
     await this.productSupplyRepository.remove(productSupply);
+
+    // Verificar si quedan insumos
+    const remainingSupplies = await this.productSupplyRepository.count({
+      where: { productId },
+    });
+
+    if (remainingSupplies === 0) {
+      const product = await this.findOne(productId);
+      product.hasRecipe = false;
+      await this.productRepository.save(product);
+    }
   }
 
   /**

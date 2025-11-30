@@ -24,6 +24,10 @@ export class SupplyInventoryItemDto {
     @IsNumber()
     @Min(0)
     minQty: number;
+
+    @IsNumber()
+    @Min(0)
+    cost: number;
 }
 
 /**
