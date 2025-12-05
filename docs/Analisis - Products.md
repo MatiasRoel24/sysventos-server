@@ -36,7 +36,6 @@
 
 - **CreateProductDto**: Datos para crear un producto
   - `name` (string, min 3 caracteres, requerido)
-  - `cost` (number, > 0, requerido)
 
 - **UpdateProductDto**: Datos para actualizar (todos opcionales)
   - Extiende CreateProductDto con PartialType
@@ -108,8 +107,7 @@
 
 ```json
 {
-  "name": "hamburguesa",
-  "cost": 1500
+  "name": "hamburguesa"
 }
 ```
 
@@ -119,7 +117,6 @@
 {
   "id": "uuid-generado",
   "name": "hamburguesa",
-  "cost": 1500,
   "isActive": true,
   "createdAt": "2025-11-22T...",
   "updatedAt": "2025-11-22T..."
@@ -154,7 +151,6 @@
   {
     "id": "uuid-2",
     "name": "pancho",
-    "cost": 1200,
     "isActive": false,
     ...
   }
@@ -244,7 +240,6 @@ GET /products/search?term=hamb&limit=10&offset=0
 {
   "id": "uuid",
   "name": "hamburguesa",
-  "cost": 1500,
   "isActive": true,
   ...
 }
@@ -312,8 +307,7 @@ GET /products/search?term=hamb&limit=10&offset=0
 
 ```json
 {
-  "name": "hamburguesa premium",
-  "cost": 1800
+  "name": "hamburguesa premium"
 }
 ```
 
@@ -323,7 +317,6 @@ GET /products/search?term=hamb&limit=10&offset=0
 {
   "id": "uuid",
   "name": "hamburguesa premium",
-  "cost": 1800,
   "isActive": true,
   ...
 }
@@ -348,7 +341,6 @@ GET /products/search?term=hamb&limit=10&offset=0
 {
   "id": "uuid",
   "name": "hamburguesa",
-  "cost": 1500,
   "isActive": false,
   ...
 }

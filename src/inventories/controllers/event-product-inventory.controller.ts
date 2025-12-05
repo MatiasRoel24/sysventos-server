@@ -98,4 +98,16 @@ export class EventProductInventoryController {
     ) {
         return this.eventProductInventoryService.remove(eventId, productId);
     }
+
+    /**
+     * Calcular costo de un producto basado en inventario de insumos del evento
+     */
+    @Auth(ValidRoles.admin)
+    @Get('calculate-cost/:productId')
+    calculateCost(
+        @Param('eventId', ParseUUIDPipe) eventId: string,
+        @Param('productId', ParseUUIDPipe) productId: string,
+    ) {
+        return this.eventProductInventoryService.calculateProductCost(eventId, productId);
+    }
 }

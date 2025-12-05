@@ -31,12 +31,5 @@ export class CreateSupplyDto {
     @IsNotEmpty()
     unit: SupplyUnit;
 
-    /**
-     * Costo del insumo
-     * @type number
-     * Debe ser mayor a 0
-     */
-    @IsNumber()
-    @IsPositive()
-    cost: number;
+
 }

@@ -152,6 +152,11 @@ export class ProductsService {
 
   /**
    * Asignar múltiples insumos a un producto (batch)
+   * Estrategia de reemplazo completo: elimina todas las relaciones existentes
+   * y las reemplaza con las nuevas. Esto permite:
+   * - Reactivar productos con insumos existentes
+   * - Agregar nuevos insumos
+   * - Eliminar insumos (no incluirlos en el array)
    * @param productId - UUID del producto
    * @param assignSuppliesDto - Array de insumos
    * @returns ProductSupply[] - Receta completa
@@ -175,16 +180,18 @@ export class ProductsService {
 
       if (!supply) throw new NotFoundException(`Insumo con ID "${supplyItem.supplyId}" no encontrado`);
       if (!supply.isActive) throw new BadRequestException(`El insumo "${supply.name}" está inactivo`);
-
-      // Validar que no exista ya en la receta
-      const existing = await this.productSupplyRepository.findOne({
-        where: { productId, supplyId: supplyItem.supplyId },
-      });
-
-      if (existing) throw new BadRequestException(`El insumo "${supply.name}" ya está asignado a este producto`);
     }
 
-    // Crear todas las relaciones
+    // PASO 1: Eliminar todas las relaciones existentes del producto
+    const existingSupplies = await this.productSupplyRepository.find({
+      where: { productId },
+    });
+
+    if (existingSupplies.length > 0) {
+      await this.productSupplyRepository.remove(existingSupplies);
+    }
+
+    // PASO 2: Crear las nuevas relaciones
     const productSupplies: ProductSupply[] = [];
     for (const supplyItem of supplies) {
       const productSupply = this.productSupplyRepository.create({
@@ -196,8 +203,8 @@ export class ProductsService {
       productSupplies.push(saved);
     }
 
-    // Actualizar hasRecipe a true
-    product.hasRecipe = true;
+    // PASO 3: Actualizar hasRecipe según si hay insumos
+    product.hasRecipe = supplies.length > 0;
     await this.productRepository.save(product);
 
     return productSupplies;

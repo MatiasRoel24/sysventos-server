@@ -38,35 +38,24 @@ export class EventProductInventoryService {
     ): Promise<EventInventory[]> {
         // Validar evento
         const event = await this.eventsService.findOne(eventId);
-        if (event.isClosed)
-            throw new BadRequestException(
-                'No se puede cargar inventario en evento cerrado',
-            );
+        if (event.isClosed) throw new BadRequestException('No se puede cargar inventario en evento cerrado');
 
         const inventories: EventInventory[] = [];
 
         for (const item of loadDto.products) {
             // Validar producto
             const product = await this.productsService.findOne(item.productId);
-            if (!product.isActive)
-                throw new BadRequestException(
-                    `El producto "${product.name}" no está activo`,
-                );
+            if (!product.isActive) throw new BadRequestException(`El producto "${product.name}" no está activo`);
 
-            // Validar duplicados
-            const existing = await this.eventInventoryRepository.findOne({
-                where: { eventId, productId: item.productId },
-            });
-            if (existing)
-                throw new BadRequestException(
-                    `El producto "${product.name}" ya está en el inventario del evento`,
-                );
+            // Validar duplicados - si existe y está activo, error. Si está inactivo, se reactivará después
+            const existing = await this.eventInventoryRepository.findOne({ where: { eventId, productId: item.productId } });
+            if (existing && existing.isActive) {
+                throw new BadRequestException(`El producto "${product.name}" ya está en el inventario del evento`);
+            }
 
             // Validar minQty <= initialQty
             if (item.minQty > item.initialQty)
-                throw new BadRequestException(
-                    `minQty no puede ser mayor que initialQty para "${product.name}"`,
-                );
+                throw new BadRequestException(`minQty no puede ser mayor que initialQty para "${product.name}"`);
 
             // Obtener receta del producto
             const recipe = await this.productsService.getSupplies(item.productId);
@@ -78,28 +67,44 @@ export class EventProductInventoryService {
             if (recipe && recipe.length > 0) {
                 hasRecipe = true;
 
-                // Si viene el costo desde el frontend, lo usamos (prioridad al usuario/frontend)
-                if (item.cost !== undefined && item.cost !== null && item.cost > 0) {
-                    calculatedCost = item.cost;
-                } else {
-                    // Calcular costo sumando (supply.cost × qtyPerUnit) usando costos del evento si existen
-                    for (const ps of recipe) {
-                        // Buscar si el insumo está en el inventario del evento para usar su costo específico
-                        const eventSupply = await this.eventSupplyInventoryRepository.findOne({
-                            where: { eventId, supplyId: ps.supplyId }
-                        });
-                        const supplyCost = eventSupply ? Number(eventSupply.cost) : (ps.supply ? Number(ps.supply.cost) : 0);
+                // Validar que existan los insumos en el evento (SIEMPRE, tenga o no costo manual)
+                let calculatedFromSupplies = 0;
+                const shouldUseManualCost = item.cost !== undefined && item.cost !== null && item.cost > 0;
 
-                        if (supplyCost > 0) calculatedCost += supplyCost * ps.qtyPerUnit;
+                for (const ps of recipe) {
+                    // Buscar si el insumo está en el inventario del evento
+                    const eventSupply = await this.eventSupplyInventoryRepository.findOne({
+                        where: { eventId, supplyId: ps.supplyId }
+                    });
+
+                    // Validar que el insumo esté cargado en el evento
+                    if (!eventSupply) {
+                        throw new BadRequestException(
+                            `El insumo "${ps.supply.name}" es requerido para el producto "${product.name}" pero no está cargado en el inventario del evento. Debe cargar primero todos los insumos necesarios.`
+                        );
                     }
+
+                    // Si NO usamos costo manual, necesitamos validar y sumar costos de insumos
+                    if (!shouldUseManualCost) {
+                        const supplyCost = Number(eventSupply.cost);
+                        if (!supplyCost || supplyCost <= 0) {
+                            throw new BadRequestException(
+                                `El insumo "${ps.supply.name}" debe tener un costo mayor a 0 en el inventario del evento para calcular el costo del producto "${product.name}".`
+                            );
+                        }
+                        calculatedFromSupplies += supplyCost * ps.qtyPerUnit;
+                    }
+                }
+
+                if (shouldUseManualCost) {
+                    calculatedCost = Number(item.cost);
+                } else {
+                    calculatedCost = calculatedFromSupplies;
                 }
             } else {
                 // NO tiene receta - requiere cost manual
-                if (item.cost === undefined || item.cost === null) {
-                    throw new BadRequestException(
-                        `El producto "${product.name}" no tiene receta. Debe proporcionar el campo "cost"`,
-                    );
-                }
+                if (item.cost === undefined || item.cost === null)
+                    throw new BadRequestException(`El producto "${product.name}" no tiene receta. Debe proporcionar el campo "cost"`);
                 calculatedCost = item.cost;
             }
 
@@ -111,20 +116,33 @@ export class EventProductInventoryService {
                 profitMargin = 100; // Costo 0 y precio > 0 implica 100% (o infinito) de ganancia
             }
 
-            // Crear inventario
-            const inventory = this.eventInventoryRepository.create({
-                eventId,
-                productId: item.productId,
-                initialQty: item.initialQty,
-                currentQty: item.initialQty,
-                minQty: item.minQty,
-                cost: calculatedCost,
-                salePrice: item.salePrice,
-                profitMargin: Number(profitMargin.toFixed(2)),
-                hasRecipe,
-            });
+            // Si existe pero estaba inactivo, actualizamos y reactivamos
+            if (existing && !existing.isActive) {
+                existing.isActive = true;
+                existing.initialQty = item.initialQty;
+                existing.currentQty = item.initialQty;
+                existing.minQty = item.minQty;
+                existing.cost = calculatedCost;
+                existing.salePrice = item.salePrice;
+                existing.profitMargin = Number(profitMargin.toFixed(2));
+                existing.hasRecipe = hasRecipe;
+                inventories.push(existing);
+            } else {
+                // Crear inventario nuevo
+                const inventory = this.eventInventoryRepository.create({
+                    eventId,
+                    productId: item.productId,
+                    initialQty: item.initialQty,
+                    currentQty: item.initialQty,
+                    minQty: item.minQty,
+                    cost: calculatedCost,
+                    salePrice: item.salePrice,
+                    profitMargin: Number(profitMargin.toFixed(2)),
+                    hasRecipe,
+                });
 
-            inventories.push(inventory);
+                inventories.push(inventory);
+            }
         }
 
         return this.eventInventoryRepository.save(inventories);
@@ -293,5 +311,100 @@ export class EventProductInventoryService {
 
         inventory.currentQty += qty;
         await this.eventInventoryRepository.save(inventory);
+    }
+
+    /**
+     * Calcular el costo de un producto basado en el inventario de insumos del evento
+     * @param eventId - UUID del evento
+     * @param productId - UUID del producto
+     * @returns Objeto con hasRecipe, calculatedCost, missingSupplies
+     */
+    async calculateProductCost(
+        eventId: string,
+        productId: string,
+    ): Promise<{
+        hasRecipe: boolean;
+        calculatedCost: number;
+        missingSupplies: string[];
+        canLoad: boolean;
+        message: string;
+    }> {
+        // Validar evento
+        const event = await this.eventsService.findOne(eventId);
+        if (event.isClosed) {
+            return {
+                hasRecipe: false,
+                calculatedCost: 0,
+                missingSupplies: [],
+                canLoad: false,
+                message: 'El evento está cerrado',
+            };
+        }
+
+        // Validar producto
+        const product = await this.productsService.findOne(productId);
+        if (!product.isActive) {
+            return {
+                hasRecipe: false,
+                calculatedCost: 0,
+                missingSupplies: [],
+                canLoad: false,
+                message: `El producto "${product.name}" no está activo`,
+            };
+        }
+
+        // Obtener receta del producto
+        const recipe = await this.productsService.getSupplies(productId);
+
+        // Si no tiene receta, el usuario debe ingresar el costo manualmente
+        if (!recipe || recipe.length === 0) {
+            return {
+                hasRecipe: false,
+                calculatedCost: 0,
+                missingSupplies: [],
+                canLoad: true,
+                message: 'El producto no tiene receta. Ingrese el costo manualmente.',
+            };
+        }
+
+        // Tiene receta - calcular costo basado en insumos del evento
+        let calculatedCost = 0;
+        const missingSupplies: string[] = [];
+
+        for (const ps of recipe) {
+            const eventSupply = await this.eventSupplyInventoryRepository.findOne({
+                where: { eventId, supplyId: ps.supplyId },
+            });
+
+            if (!eventSupply) {
+                missingSupplies.push(ps.supply.name);
+                continue;
+            }
+
+            const supplyCost = Number(eventSupply.cost);
+            if (supplyCost > 0) {
+                calculatedCost += supplyCost * ps.qtyPerUnit;
+            } else {
+                missingSupplies.push(`${ps.supply.name} (sin costo definido)`);
+            }
+        }
+
+        if (missingSupplies.length > 0) {
+            return {
+                hasRecipe: true,
+                calculatedCost: 0,
+                missingSupplies,
+                canLoad: false,
+                message: `Faltan insumos en el inventario del evento: ${missingSupplies.join(', ')}`,
+            };
+        }
+
+        return {
+            hasRecipe: true,
+            calculatedCost: Number(calculatedCost.toFixed(2)),
+            missingSupplies: [],
+            canLoad: true,
+            message: 'Costo calculado automáticamente',
+        };
     }
 }

@@ -44,26 +44,37 @@ export class EventSupplyInventoryService {
             const supply = await this.suppliesService.findOne(item.supplyId);
             if (!supply.isActive) throw new BadRequestException(`El insumo "${supply.name}" no está activo`);
 
-            // Validar duplicados
+            // Validar duplicados - si existe y está activo, error. Si está inactivo, se reactivará
             const existing = await this.eventSupplyInventoryRepository.findOne({
                 where: { eventId, supplyId: item.supplyId },
             });
-            if (existing) throw new BadRequestException(`El insumo "${supply.name}" ya está en el inventario del evento`);
+            if (existing && existing.isActive) {
+                throw new BadRequestException(`El insumo "${supply.name}" ya está en el inventario del evento`);
+            }
 
             // Validar minQty <= initialQty
             if (item.minQty > item.initialQty) throw new BadRequestException(`minQty no puede ser mayor que initialQty para "${supply.name}"`);
 
-            // Crear inventario
-            const inventory = this.eventSupplyInventoryRepository.create({
-                eventId,
-                supplyId: item.supplyId,
-                initialQty: item.initialQty,
-                currentQty: item.initialQty,
-                minQty: item.minQty,
-                cost: item.cost,
-            });
-
-            inventories.push(inventory);
+            // Si existe pero estaba inactivo, reactivamos
+            if (existing && !existing.isActive) {
+                existing.isActive = true;
+                existing.initialQty = item.initialQty;
+                existing.currentQty = item.initialQty;
+                existing.minQty = item.minQty;
+                existing.cost = item.cost;
+                inventories.push(existing);
+            } else {
+                // Crear inventario nuevo
+                const inventory = this.eventSupplyInventoryRepository.create({
+                    eventId,
+                    supplyId: item.supplyId,
+                    initialQty: item.initialQty,
+                    currentQty: item.initialQty,
+                    minQty: item.minQty,
+                    cost: item.cost,
+                });
+                inventories.push(inventory);
+            }
         }
 
         return this.eventSupplyInventoryRepository.save(inventories);

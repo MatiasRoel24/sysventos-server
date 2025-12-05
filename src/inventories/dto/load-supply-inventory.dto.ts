@@ -26,7 +26,7 @@ export class SupplyInventoryItemDto {
     minQty: number;
 
     @IsNumber()
-    @Min(0)
+    @IsPositive()
     cost: number;
 }
 

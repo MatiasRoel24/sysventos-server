@@ -21,14 +21,5 @@ export class CreateProductDto {
     @MinLength(3)
     name: string;
 
-    /**
-     * Costo del producto
-     * @type number
-     * Opcional: se calcula automáticamente si tiene receta
-     * Requerido: solo para productos sin receta (ej: gaseosas)
-     */
-    @IsOptional()
-    @IsNumber()
-    @IsPositive()
-    cost?: number;
+
 }

@@ -21,12 +21,12 @@ export class UpdateProductInventoryDto {
 
     @IsOptional()
     @IsNumber()
-    @IsPositive()
+    @Min(0)
     cost?: number;
 
     @IsOptional()
     @IsNumber()
-    @IsPositive()
+    @Min(0)
     salePrice?: number;
 
     @IsOptional()

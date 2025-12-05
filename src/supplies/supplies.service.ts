@@ -184,7 +184,6 @@ export class SuppliesService {
         // Actualizar datos y reactivar
         supply.name = createSupplyDto.name.toLowerCase().trim();
         supply.unit = createSupplyDto.unit;
-        supply.cost = createSupplyDto.cost;
         supply.isActive = true;
 
         return this.supplyRepository.save(supply);

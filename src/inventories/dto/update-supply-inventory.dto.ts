@@ -18,4 +18,9 @@ export class UpdateSupplyInventoryDto {
     @IsNumber()
     @Min(0)
     minQty?: number;
+
+    @IsOptional()
+    @IsNumber()
+    @Min(0)
+    cost?: number;
 }

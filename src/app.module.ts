@@ -6,7 +6,6 @@ import { ProductsModule } from './products/products.module';
 import { SuppliesModule } from './supplies/supplies.module';
 import { UsersModule } from './users/users.module';
 import { SalesModule } from './sales/sales.module';
-import { PaymentsModule } from './payments/payments.module';
 import { RolesModule } from './roles/roles.module';
 import { InventoriesModule } from './inventories/inventories.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -33,7 +32,6 @@ import { SeedModule } from './seed/seed.module';
     SuppliesModule,
     UsersModule,
     SalesModule,
-    PaymentsModule,
     RolesModule,
     InventoriesModule,
     AuthModule,
